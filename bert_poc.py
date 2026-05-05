@@ -222,12 +222,12 @@ for epoch in range(num_epochs):
 
   for batch in train_loader:
     input_ids = batch["input_ids"].to(device)
-    attention_mark = batch["attention_mask"].to(device)
+    attention_mask = batch["attention_mask"].to(device)
     labels = batch["label"].to(device)
 
     outputs = model(
       input_ids=input_ids,
-      attention_mark=attention_mark,
+      attention_mask=attention_mask,
       labels=labels,
     )
 
@@ -249,12 +249,12 @@ for epoch in range(num_epochs):
   with torch.no_grad():
     for batch in test_loader:
       input_ids = batch["input_ids"].to(device)
-      attention_mark = batch["attention_mark"].to(device)
+      attention_mask = batch["attention_mask"].to(device)
       labels = batch["label"].to(device)
 
       outputs = model(
         input_ids=input_ids,
-        attention_mark=attention_mark,
+        attention_mask=attention_mask,
       )
 
       preds = torch.argmax(outputs.logits, dim=1)

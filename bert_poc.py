@@ -1,4 +1,4 @@
-import json, torch, time
+import json, torch, time, pickle
 import pandas as pd
 
 from pathlib import Path
@@ -188,9 +188,20 @@ test_loader = DataLoader(
   shuffle=False
 )
 
+num_labels = len(le.classes_)
+
+id2label = {}
+label2id = {}
+
+for i, label in enumerate(le.classes_):
+  id2label[i] = label
+  label2id[label] = i
+
 model = BertForSequenceClassification.from_pretrained(
   "bert-base-uncased",
-  num_labels=6,
+  num_labels=num_labels,
+  id2label=id2label,
+  label2id=label2id,
 )
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -262,10 +273,28 @@ for epoch in range(num_epochs):
       all_labels.extend(labels.cpu().numpy())
 
   print(f"Epoch {epoch+1}/{num_epochs} | Loss: {avg_loss:.4f}")
-  print(classification_report(all_labels, all_preds, target_names=le.classes_))
+  print(classification_report(
+    all_labels, 
+    all_preds, 
+    target_names=le.classes_,
+    labels=list(range(len(le.classes_))),
+    zero_division=0,
+  ))
 
 ## Print end time
 end_time = time.time()
 print(f"Training ended at:  {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}")
 print(f"Total training time: {end_time - start_time:.2f}s")
 print("\nTraining done! 🎉")
+
+SAVE_PATH = Path("./bert-log-classifier")
+SAVE_PATH.mkdir(exist_ok=True)
+
+model.save_pretrained(SAVE_PATH)
+tokenizer.save_pretrained(SAVE_PATH)
+
+with open(SAVE_PATH / "label_encoder.pkl", "wb") as f:
+  pickle.dump(le, f)
+
+print(f"Model saved to {SAVE_PATH}")
+print(f"Labels: {le.classes_}")
